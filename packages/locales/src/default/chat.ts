@@ -970,7 +970,6 @@ export default {
   'heteroAgent.executionTarget.reconnect': 'Reconnect',
   'heteroAgent.executionTarget.reconnectFailed':
     'Could not reconnect this device. Make sure the desktop app is running, then try again.',
-  'heteroAgent.executionTarget.otherDevicesGroup': 'Other devices',
   'heteroAgent.executionTarget.personalGroup': 'Private Devices',
   'heteroAgent.executionTarget.sandbox': 'Cloud Sandbox',
   'heteroAgent.executionTarget.sandboxDesc': 'Runs in the cloud, no machine needed',
@@ -984,6 +983,7 @@ export default {
   'heteroAgent.executionTarget.deviceGroupSummary': '{{online}} online · {{total}} total',
   'heteroAgent.executionTarget.myDevicesGroup': 'My devices',
   'heteroAgent.executionTarget.devicesGroup': 'Devices',
+  'heteroAgent.executionTarget.sandboxGroup': 'Sandboxes',
   'heteroAgent.executionTarget.downloadDesktop': 'Get Desktop App',
   'heteroAgent.executionTarget.downloadDesktopDesc': 'Run agents with access to your computer',
   'heteroAgent.executionTarget.downloadDesktopTitle': 'Get the desktop app',

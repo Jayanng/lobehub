@@ -139,6 +139,8 @@ export interface OptionRowProps {
   tag?: ReactNode;
   /** Several tags, each in its own pill rather than one pill holding them all. */
   tags?: ReactNode[];
+  /** Marks the row for tests and probes. */
+  testId?: string;
   /** Restyles the row; applied last so it wins over the defaults. */
   xstyle?: stylex.StyleXStyles;
 }
@@ -158,9 +160,11 @@ const OptionRow = memo<OptionRowProps>(
     onClick,
     tag,
     tags,
+    testId,
     xstyle,
   }) => (
     <div
+      data-testid={testId}
       onClick={() => {
         if (!disabled) onClick();
       }}
