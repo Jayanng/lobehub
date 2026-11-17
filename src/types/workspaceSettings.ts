@@ -40,6 +40,7 @@ export enum WorkspaceSettingsTabs {
   Teams = 'teams',
   Trash = 'trash',
   Usage = 'usage',
+  Webhook = 'webhook',
 }
 
 export const DEFAULT_WORKSPACE_SETTINGS_TAB = WorkspaceSettingsTabs.General;

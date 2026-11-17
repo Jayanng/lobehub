@@ -30,6 +30,7 @@ import {
   TagIcon,
   TerminalSquare,
   Trash2,
+  WebhookIcon,
   Wrench,
   ZapIcon,
 } from 'lucide-react';
@@ -294,6 +295,12 @@ export const useCategory = () => {
         icon: KeyIcon,
         key: SettingsTabs.APIKey,
         label: tAuth('tab.apikey'),
+      },
+      // Outbound events for the API Key's integrations, so it sits beside it.
+      (showApiKeyManage || isDevMode) && {
+        icon: WebhookIcon,
+        key: SettingsTabs.Webhook,
+        label: t('tab.webhook'),
       },
       enableOAuthApps && {
         icon: AppWindowIcon,

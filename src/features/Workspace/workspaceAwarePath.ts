@@ -82,6 +82,8 @@ export const WORKSPACE_SETTINGS_TABS: ReadonlySet<string> = new Set([
   // Trashed rows are recorded per workspace; the bin follows the active one.
   'trash',
   'usage',
+  // Developer webhooks belong to one member in one space, like API keys.
+  'webhook',
 ]);
 
 const SETTINGS_PREFIX_REGEX = /^\/settings\/([^/?#]+)/;

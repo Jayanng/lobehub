@@ -33,6 +33,7 @@ import {
   Trash2,
   Users,
   UsersRound,
+  WebhookIcon,
   ZapIcon,
 } from 'lucide-react';
 import { useMemo } from 'react';
@@ -349,6 +350,13 @@ export const useWorkspaceSettingCategory = (): WorkspaceSettingCategoryGroup[] =
               icon: KeyIcon,
               key: WorkspaceSettingsTabs.APIKey,
               label: tAuth('tab.apikey'),
+            },
+            // Same member-level gate as API keys: webhooks carry the events a
+            // member's API integrations react to.
+            canCreateContent && {
+              icon: WebhookIcon,
+              key: WorkspaceSettingsTabs.Webhook,
+              label: t('tab.webhook'),
             },
             enableOAuthApps && {
               icon: AppWindowIcon,

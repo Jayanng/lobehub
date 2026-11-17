@@ -77,6 +77,9 @@ export const componentMap = {
   [SettingsTabs.APIKey]: dynamic(() => import('../apikey'), {
     loading: loading('Settings > APIKey'),
   }),
+  [SettingsTabs.Webhook]: dynamic(() => import('../webhook'), {
+    loading: loading('Settings > Webhook'),
+  }),
   [SettingsTabs.OAuthApps]: dynamic(() => import('../oauth-apps'), {
     loading: loading('Settings > OAuthApps'),
   }),
