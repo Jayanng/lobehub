@@ -17,18 +17,18 @@ vi.mock('@lobehub/ui', async (importOriginal) => ({
 describe('GroupSubmenu', () => {
   it('keeps one first-level row and hands its choices to the submenu', () => {
     render(
-      <GroupSubmenu hint={'Persistent'} icon={null} label={'Sandboxes'} testId={'group'}>
+      <GroupSubmenu hint={'Persistent'} icon={null} label={'Cloud sandbox'} testId={'group'}>
         <div>choice:temporary</div>
       </GroupSubmenu>,
     );
 
     const row = screen.getByTestId('group');
-    expect(row.textContent).toContain('Sandboxes');
+    expect(row.textContent).toContain('Cloud sandbox');
     expect(row.textContent).toContain('Persistent');
     expect(row.textContent).not.toContain('choice:');
 
     const submenu = screen.getByTestId('submenu');
-    expect(submenu.textContent).toContain('Sandboxes');
+    expect(submenu.textContent).toContain('Cloud sandbox');
     expect(submenu.textContent).toContain('choice:temporary');
   });
 });

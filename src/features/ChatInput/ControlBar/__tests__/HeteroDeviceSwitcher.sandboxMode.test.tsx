@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import HeteroDeviceSwitcher from '../HeteroDeviceSwitcher';
 
 const state = vi.hoisted(() => ({
+  agencyConfig: { executionTarget: 'sandbox' } as Record<string, unknown>,
   devices: [] as object[],
   driveStatus: 'ready' as 'hidden' | 'loading' | 'ready' | 'upgrade',
   openUpsell: vi.fn(),
@@ -57,7 +58,7 @@ vi.mock('@/features/Workspace/useWorkspaceAwareNavigate', () => ({
 vi.mock('@/helpers/gatewayMode', () => ({ useIsGatewayModeEnabled: () => false }));
 vi.mock('@/hooks/useEffectiveAgencyConfig', () => ({
   useEffectiveAgencyConfig: () => ({
-    agencyConfig: { executionTarget: 'sandbox' },
+    agencyConfig: state.agencyConfig,
     canDisplayExecutionTarget: true,
     canSelectExecutionTarget: true,
     isPreferenceLoading: false,
@@ -86,9 +87,11 @@ vi.mock('@/store/electron', () => ({
     selector({ gatewayDeviceInfo: undefined, useFetchGatewayDeviceInfo: () => () => undefined }),
 }));
 vi.mock('../../hooks/useTopicId', () => ({ useTopicId: () => 'topic-1' }));
-// A device group is one row here; its submenu has tests of its own.
-vi.mock('../DeviceGroupSubmenu', () => ({
-  default: ({ label }: { label: string }) => <div>{label}</div>,
+// A machine is one clickable row here; DeviceOptionRow has tests of its own.
+vi.mock('../DeviceOptionRow', () => ({
+  default: ({ device, onSelect }: { device: { hostname: string }; onSelect: () => void }) => (
+    <div onClick={onSelect}>{device.hostname}</div>
+  ),
 }));
 vi.mock('../useSandboxNetworkToggle', () => ({ useSandboxNetworkToggle: () => vi.fn() }));
 vi.mock('../useTopicAwareTargetSelect', () => ({
@@ -108,6 +111,7 @@ const TEMPORARY = 'heteroAgent.executionTarget.temporarySandbox';
 const PERSISTENT = 'heteroAgent.executionTarget.persistentSandbox';
 
 beforeEach(() => {
+  state.agencyConfig = { executionTarget: 'sandbox' };
   state.devices = [];
   state.driveStatus = 'ready';
   state.persistent = false;
@@ -136,7 +140,9 @@ describe('HeteroDeviceSwitcher — persistent sandbox', () => {
     render(<HeteroDeviceSwitcher agentId="agent-1" />);
 
     expect(screen.getAllByTestId('chip')[0].textContent).toContain(TEMPORARY);
-    expect(screen.queryByText(SANDBOX)).toBeNull();
+    // "Cloud sandbox" is left to the first-level row the two sandboxes sit under.
+    const submenu = screen.getByTestId('execution-group-sandbox').parentElement!;
+    expect(submenu.textContent).toContain(TEMPORARY);
   });
 
   // The persistent sandbox is where everyday work belongs, so it comes first;
@@ -210,18 +216,25 @@ describe('HeteroDeviceSwitcher — persistent sandbox', () => {
   });
 });
 
-// T-14345: the first level is a plain list of titles, without section labels
-// or descriptions; the sandboxes sit one level down, as the device groups do.
-describe('HeteroDeviceSwitcher — first level', () => {
-  const follows = (a: Element, b: Element) =>
-    !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+// T-14358: the first level is four rows — this computer, cloud sandbox,
+// devices, no device — and every concrete choice sits one level down.
+describe('HeteroDeviceSwitcher — four first-level rows', () => {
+  const firstLevel = () => {
+    const menu = screen.getByTestId('execution-target-menu');
+    // The header, then one entry per kind of place to run.
+    return [...menu.children].slice(1);
+  };
+  // A group's popover renders its row (the `chip` slot of the mock) and then
+  // its submenu; the row alone is the first level.
+  const row = (testId: string) => screen.getByTestId(testId);
+  const submenu = (testId: string) => row(testId).closest('[data-testid="chip"]')!.parentElement!;
 
   beforeEach(() => {
     state.devices = [
       {
         channels: [],
         deviceId: 'd1',
-        hostname: 'box',
+        hostname: 'build-host-7',
         online: true,
         platform: 'linux',
         scope: 'personal',
@@ -229,42 +242,110 @@ describe('HeteroDeviceSwitcher — first level', () => {
     ];
   });
 
-  it('has no section labels', () => {
+  it('shows exactly four first-level rows, in order', () => {
+    render(<HeteroDeviceSwitcher agentId="agent-1" />);
+
+    const entries = firstLevel();
+    expect(entries).toHaveLength(4);
+    expect(entries[0].textContent).toContain('heteroAgent.executionTarget.local');
+    expect(entries[1].textContent).toContain(SANDBOX);
+    expect(entries[2].textContent).toContain('heteroAgent.executionTarget.devicesGroup');
+    expect(entries[3].textContent).toBe('heteroAgent.executionTarget.none');
+  });
+
+  it('has no section labels on the first level', () => {
     render(<HeteroDeviceSwitcher agentId="agent-1" />);
 
     expect(screen.queryByText('heteroAgent.executionTarget.builtinGroup')).toBeNull();
-    expect(screen.queryByText('heteroAgent.executionTarget.devicesGroup')).toBeNull();
+    expect(screen.queryByText('heteroAgent.executionTarget.sandboxGroup')).toBeNull();
   });
 
-  it('shows no device and auto by title only', () => {
+  it('keeps every concrete choice off the first-level rows', () => {
     render(<HeteroDeviceSwitcher agentId="agent-1" />);
 
-    expect(screen.getByText('heteroAgent.executionTarget.none')).toBeTruthy();
-    expect(screen.getByText('heteroAgent.executionTarget.auto')).toBeTruthy();
-    expect(screen.queryByText('heteroAgent.executionTarget.noneDesc')).toBeNull();
-    expect(screen.queryByText('heteroAgent.executionTarget.autoDesc')).toBeNull();
+    for (const id of [
+      'execution-group-local',
+      'execution-group-sandbox',
+      'execution-group-devices',
+    ])
+      for (const detail of ['Desc', 'executionTarget.auto', 'build-host-7', 'download'])
+        expect(row(id).textContent).not.toContain(detail);
   });
 
-  it('puts the sandboxes in a submenu after auto and before the device groups', () => {
+  it('puts auto and the machines under devices', () => {
     render(<HeteroDeviceSwitcher agentId="agent-1" />);
 
-    const group = screen.getByTestId('sandbox-group');
-    expect(group.textContent).toContain('heteroAgent.executionTarget.sandboxGroup');
-    // The row itself lists no sandbox; they are the submenu's.
-    expect(group.textContent).not.toContain('persistentSandboxDesc');
-
-    const auto = screen.getByText('heteroAgent.executionTarget.auto');
-    const persistent = screen.getByText('heteroAgent.executionTarget.persistentSandboxDesc');
-    const devices = screen.getByText('heteroAgent.executionTarget.myDevicesGroup');
-    expect(follows(auto, group)).toBe(true);
-    expect(follows(group, persistent)).toBe(true);
-    expect(follows(persistent, devices)).toBe(true);
+    const devices = submenu('execution-group-devices');
+    expect(devices.textContent).toContain('heteroAgent.executionTarget.auto');
+    expect(devices.textContent).toContain('heteroAgent.executionTarget.autoDesc');
+    expect(devices.textContent).toContain('build-host-7');
   });
 
-  it('names the sandbox in use on the group row', () => {
+  it('puts both cloud sandboxes under cloud sandbox', () => {
+    render(<HeteroDeviceSwitcher agentId="agent-1" />);
+
+    const sandbox = submenu('execution-group-sandbox');
+    expect(sandbox.textContent).toContain(PERSISTENT);
+    expect(sandbox.textContent).toContain(TEMPORARY);
+  });
+
+  // Web has no computer to run on in-process, so the row leads to the
+  // desktop app rather than disappearing.
+  it('leads this computer to the desktop app on web', () => {
+    render(<HeteroDeviceSwitcher agentId="agent-1" />);
+
+    expect(
+      submenu('execution-group-local').querySelector('[data-testid="download-desktop-card"]'),
+    ).toBeTruthy();
+  });
+
+  it('picks auto from the devices submenu', async () => {
+    render(<HeteroDeviceSwitcher agentId="agent-1" />);
+
+    fireEvent.click(screen.getByText('heteroAgent.executionTarget.autoDesc'));
+    await vi.waitFor(() => expect(state.selectTarget).toHaveBeenCalledTimes(1));
+    expect(state.selectTarget.mock.calls[0][0]).toBe('auto');
+  });
+
+  it('picks a machine from the devices submenu', async () => {
+    render(<HeteroDeviceSwitcher agentId="agent-1" />);
+
+    fireEvent.click(screen.getByText('build-host-7'));
+    await vi.waitFor(() => expect(state.selectTarget).toHaveBeenCalledTimes(1));
+    expect(state.selectTarget.mock.calls[0].slice(0, 2)).toEqual(['device', 'd1']);
+  });
+
+  it('names the sandbox in use on its row', () => {
     state.persistent = true;
     render(<HeteroDeviceSwitcher agentId="agent-1" />);
 
-    expect(screen.getByTestId('sandbox-group').textContent).toContain(PERSISTENT);
+    expect(row('execution-group-sandbox').textContent).toContain(PERSISTENT);
+  });
+
+  it('names the device in use on the devices row', () => {
+    state.agencyConfig = { boundDeviceId: 'd1', executionTarget: 'device' };
+    render(<HeteroDeviceSwitcher agentId="agent-1" />);
+
+    expect(row('execution-group-devices').textContent).toContain('build-host-7');
+    expect(row('execution-group-sandbox').textContent).not.toContain(TEMPORARY);
+  });
+
+  it('names auto on the devices row when it is in use', () => {
+    state.agencyConfig = { executionTarget: 'auto' };
+    render(<HeteroDeviceSwitcher agentId="agent-1" />);
+
+    expect(row('execution-group-devices').textContent).toContain(
+      'heteroAgent.executionTarget.auto',
+    );
+  });
+
+  // A CLI agent must run somewhere: no "no device", and no auto under devices.
+  it('drops no device and auto for a heterogeneous agent', () => {
+    state.agencyConfig = { executionTarget: 'sandbox', heterogeneousProvider: { type: 'codex' } };
+    render(<HeteroDeviceSwitcher agentId="agent-1" />);
+
+    expect(firstLevel()).toHaveLength(3);
+    expect(screen.queryByText('heteroAgent.executionTarget.none')).toBeNull();
+    expect(screen.queryByText('heteroAgent.executionTarget.autoDesc')).toBeNull();
   });
 });
