@@ -6,7 +6,7 @@
   },
   "dialect": "postgresql",
   "enums": {},
-  "id": "ee648bab-1dff-4113-96d8-0c54924688f6",
+  "id": "5ac4a492-5705-4c2e-a782-27b64ec7bff0",
   "policies": {},
   "prevId": "f353e57e-aad8-4a85-81e3-07fad5564c60",
   "roles": {},
@@ -17796,13 +17796,6 @@
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
-        },
-        "accessed_at": {
-          "name": "accessed_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
         },
         "created_at": {
           "name": "created_at",

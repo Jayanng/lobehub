@@ -32,7 +32,6 @@ CREATE TABLE IF NOT EXISTS "webhook_endpoints" (
 	"disabled_reason" text,
 	"consecutive_failures" integer DEFAULT 0 NOT NULL,
 	"last_delivery_at" timestamp with time zone,
-	"accessed_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
